@@ -21,4 +21,4 @@ This repository contains scripts that:
 Scripts are written to work in Matlab and Octave. These coding environments are available on all major operating systems.
 
 ## Installation
-Clone repo to directory of choice. Add the entire git repo path to the Matlab and Octave startup so that functions will be available independent of working directory. To add to the path perminently, call the script InstallRepo2Path.m in the root directory of the repo.
+Clone repo to directory of choice. Add the entire git repo path to the Matlab and Octave startup so that functions will be available independent of working directory. To add to the path permanently, call the script InstallRepo2Path.m in the root directory of the repo.
