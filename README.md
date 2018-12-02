@@ -17,7 +17,7 @@ This repository contains scripts that:
 4. Extract ODF and parameter values directly from parameter file
 5. A general MAUD wrapper for batch analysis
 
-## Comptibility
+## Compatibility
 Scripts are written to work in Matlab and Octave. These coding environments are available on all major operating systems.
 
 ## Installation
