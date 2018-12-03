@@ -1,0 +1,19 @@
+function [lc] = SetCPUs(lc)
+%SetCPUs If the numcores on machine < user specified cores, set to
+%max machine cores. If ncases < cores set, set machine cores to ncases
+    if ispc 
+        [status numprocs]=system("echo %number_of_processors%");
+    elseif isunix
+        [status,numprocs] = system("nproc");
+    end
+
+    if lc.options{1,2}>numprocs
+        lc.options{1,2}=numprocs
+        X=sprintf('More concurrent cases specified than CPUs... setting option ''%s'' to max of %d',lc.options{1,1},feature('numcores'));
+        disp(X);
+    end
+    
+    if lc.ncases<lc.options{1,2} 
+        lc.options{1,2} =lc.ncases; 
+    end
+end
