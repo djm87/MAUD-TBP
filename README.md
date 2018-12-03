@@ -17,5 +17,8 @@ This repository contains scripts that:
 4. Extract ODF and parameter values directly from parameter file
 5. A general MAUD wrapper for batch analysis
 
-## Comptibility
+## Compatibility
 Scripts are written to work in Matlab and Octave. These coding environments are available on all major operating systems.
+
+## Installation
+Clone repo to directory of choice. Add the entire git repo path to the Matlab and Octave startup so that functions will be available independent of working directory. To add to the path permanently, call the script InstallRepo2Path.m in the root directory of the repo.
