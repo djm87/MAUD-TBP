@@ -73,7 +73,7 @@ function [lc] = readIns(lc)
     end
 end
 function [samplePath,caseName]=GetSamplePath(str2convert)
-    str2convert=erase(str2convert,'''');
+    str2convert=strrep(str2convert,'''','');
     if isunix
         FullPath=strrep(str2convert,'//','/');
         loc=strfind(FullPath,'/');
@@ -86,7 +86,7 @@ function [samplePath,caseName]=GetSamplePath(str2convert)
     samplePath=fullfile(pwd,samplePath);
 end
 function [FullPath]=GetFullPath(str2convert)
-    str2convert=erase(str2convert,'''');
+    str2convert=strrep(str2convert,'''','');
     if isunix
         FullPath=strrep(str2convert,'//','/');
     elseif ispc 

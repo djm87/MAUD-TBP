@@ -26,7 +26,7 @@ function [phase] = ExtractPhaseFromPar(parName)
     phase.c=cell(phase.num,1);
     for i=1:phase.num
         %Get the phase names and the beginning and end of the phase objects
-        text=erase(c{loctmp(i)},[keywords{1},' ']); 
+        text=strrep(c{loctmp(i)},[keywords{1},' '],''); 
         phase.name{i}=text(text~='''');
         tmp=find(~cellfun(@isempty,...
         strfind(c,['#subordinateObject_',phase.name{i}])));
@@ -51,7 +51,8 @@ function [phase] = ExtractPhaseFromPar(parName)
         
             %Get the space group for the phase
             loctmp=find(~cellfun(@isempty,strfind(phase.c{i},keywords{3})));
-            text=erase(phase.c{i}{loctmp},[keywords{3},' ']);
+            text=strrep(phase.c{i}{loctmp},[keywords{3},' '],'');
+            
             if and(i==2,any(text==':')) 
                 disp('Warning: MAUD cell origin option not handled, removing :# from space group')
                 text=text(1:end-2); %Removes the differientiation of cell origins
