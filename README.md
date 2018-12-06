@@ -22,3 +22,5 @@ Scripts are written to work in Matlab and Octave. These coding environments are 
 
 ## Installation
 Clone repo to directory of choice. Add the entire git repo path to the Matlab and Octave startup so that functions will be available independent of working directory. To add to the path permanently, call the script InstallRepo2Path.m in the root directory of the repo.
+
+Octave I/O doesn't handle the ~1million lines of text in the parameter file. To make Octave usable, the gnu commandline function sed is used to quickly remove the locally stored intensity data, thereby reducing hte parameter file to 20000-30000 lines of text. For windows you will need to install: http://gnuwin32.sourceforge.net/packages/sed.htm.
