@@ -26,7 +26,7 @@ function [phase] = ExtractPhaseFromPar(parName)
     phase.c=cell(phase.num,1);
     for i=1:phase.num
         %Get the phase names and the beginning and end of the phase objects
-        text=erase(c{loctmp(i)},[keywords{1},' ']); 
+        text=strrep(c{loctmp(i)},[keywords{1},' '],''); 
         phase.name{i}=text(text~='''');
         tmp=find(~cellfun(@isempty,...
         strfind(c,['#subordinateObject_',phase.name{i}])));
