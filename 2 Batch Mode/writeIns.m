@@ -1,3 +1,11 @@
+%Set environment
+isOctave = exist('OCTAVE_VERSION', 'builtin') ~= 0;
+if isOctave
+    isMatlab=false;
+else
+    isMatlab=true;
+end
+
 %writeIns A script based generation of batch input file  
 insName='Example.ins';
 
@@ -88,9 +96,7 @@ for BS=1:nSteps
                 switch BatchOptions{k}
                 case "_riet_analysis_file"
                     BP=fullfile(SampleDir{i},int2str(id),InputPar{i,BS});
-                    if isunix
-                        BP=['/' BP]
-                    end
+                    BP=checkBP(BP);
                     fprintf(fid,'''%s'' ',BP);
                 case "_riet_analysis_wizard_index"
                     fprintf(fid,'%d ',WizNum{i,BS});
@@ -98,9 +104,7 @@ for BS=1:nSteps
                     fprintf(fid,'%d ',NIter{i,BS});
                 case "_riet_analysis_fileToSave"
                     BP=fullfile(SampleDir{i},int2str(id),OutputPar{i,BS});
-                    if isunix
-                        BP=['/' BP]
-                    end
+                    BP=checkBP(BP);
                     fprintf(fid,'''%s'' ',BP);
                 case "_riet_meas_datafile_name"
                   disp('Warning: using untested feature "_riet_meas_datafile_name"')  
@@ -109,15 +113,11 @@ for BS=1:nSteps
                   %fprintf(fid,'''%s'' ',BP);
                 case "_riet_append_simple_result_to"
                    BP=fullfile(SampleDir{i},OutputResult{i,BS});
-                   if isunix
-                        BP=['/' BP]
-                    end
+                   BP=checkBP(BP);
                    fprintf(fid,'''%s'' ',BP);
                 case "_riet_append_result_to"
                    BP=fullfile(SampleDir{i},OutputResultAutotrace{i,BS});
-                   if isunix
-                        BP=['/' BP]
-                    end
+                   BP=checkBP(BP);
                    fprintf(fid,'''%s'' ',BP);
                 case "_riet_meas_datafile_replace"
                   disp('Warning: using untested feature "_riet_meas_datafile_replace"')  

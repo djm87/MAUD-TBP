@@ -7,7 +7,7 @@ function [c] = readPar(parName)
 %   Input:  (1) name if local or full path to par file
 %   Output: (1) a cell list of strings with each line of the parameter file.
 
-    disp('Removing intensity data at import and rewriting par without intensity data for future processing');
+    printMessage('Removing intensity data at import and rewriting par without intensity data for future processing');
     if ispc
       loc=strfind(parName,'\');
     elseif isunix

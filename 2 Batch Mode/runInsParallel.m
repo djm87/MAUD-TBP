@@ -10,7 +10,7 @@ lc=readIns(lc);
 
 lc.options={'Max MAUD Instances',            4;
              'Delete per cpu results',       0;
-             'Run MAUD Refinements',         1;
+             'Run MAUD Refinements',         0;
              'Suppress cmd windows',         0;%when true on PC Matlab does not wait for processes to end, but Octave works fine.
              'Use parallel for loops',       0};%need parallel toolbox or octave parallel environement. Used in: custom refinements, phase extraction, odf operations
 
@@ -34,7 +34,7 @@ for BS = 1:lc.numBatchStep
     
     lc = exportMAUDODFs(lc);   
     
-    fprintf('Done with Step %d\n\n',BS) 
+    printMessage(sprintf('Done with Step %d\n\n',BS));
 end
 savelc(lc);
 toc

@@ -36,7 +36,7 @@ function [phase] = ExtractPhaseFromPar(parName)
         phase.end(i)=tmp(end);
 
         %Create subsets of c for each phase
-        phase.c{i}={c{phase.begin(i):phase.end(i)}}';
+        phase.c{i}={c{phase.begin(i):phase.end(i)}};
 
         %find if phase.c contains an E-WIMV odf 
         phase.hasODF(i)=~isempty(find(~cellfun(@isempty,...
