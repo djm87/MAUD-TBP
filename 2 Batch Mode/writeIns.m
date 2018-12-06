@@ -2,12 +2,10 @@
 insName='Example.ins';
 
 %Specify the sample directories
-SampleDir={'//Batch/WE43_Dir1_num1_HIPPO2_undef/';
-           '//Batch/WE43_Dir2_num2_HIPPO3_undef/';
-           '//Batch/WE43_Dir45_num1_HIPPO1_undef/'};    
+SampleDir={'//Batch/Dir1_num1_undef/';
+           '//Batch/Dir2_num2_undef/'};    
 %Specify the folder names (must be an integer)
 CaseNums={1:2; %Cases to run in each sample directory
-          1:3;
           1:3};
 %Specify the number of refinement steps
 nSteps=2;
@@ -23,19 +21,16 @@ end
 %Specify the number of refinement itterations per sample, per
 %refinement step
 NIter={1,1,1;
-       1,1,1;
        1,1,1};
 
 %Specify the wizards per sample, per refinement step
 WizNum={5,5,3;
-        5,5,3;
         5,5,3};
 
 %Specify the input par per sample for the first refinement step
 %Only the first case is needed.. others are generated below
-InputPar={'/Initial_template.par'; 
-          '/Initial_template.par';
-          '/Initial_template.par'};
+InputPar={'/initial.par'; 
+          '/initial.par'};
 
 % Generate names per sample, per refinement step
 % Uses OutputPar of previous refinement as InputPar for current
@@ -93,6 +88,9 @@ for BS=1:nSteps
                 switch BatchOptions{k}
                 case "_riet_analysis_file"
                     BP=fullfile(SampleDir{i},int2str(id),InputPar{i,BS});
+                    if isunix
+                        BP=['/' BP]
+                    end
                     fprintf(fid,'''%s'' ',BP);
                 case "_riet_analysis_wizard_index"
                     fprintf(fid,'%d ',WizNum{i,BS});
@@ -100,6 +98,9 @@ for BS=1:nSteps
                     fprintf(fid,'%d ',NIter{i,BS});
                 case "_riet_analysis_fileToSave"
                     BP=fullfile(SampleDir{i},int2str(id),OutputPar{i,BS});
+                    if isunix
+                        BP=['/' BP]
+                    end
                     fprintf(fid,'''%s'' ',BP);
                 case "_riet_meas_datafile_name"
                   disp('Warning: using untested feature "_riet_meas_datafile_name"')  
@@ -108,9 +109,15 @@ for BS=1:nSteps
                   %fprintf(fid,'''%s'' ',BP);
                 case "_riet_append_simple_result_to"
                    BP=fullfile(SampleDir{i},OutputResult{i,BS});
+                   if isunix
+                        BP=['/' BP]
+                    end
                    fprintf(fid,'''%s'' ',BP);
                 case "_riet_append_result_to"
                    BP=fullfile(SampleDir{i},OutputResultAutotrace{i,BS});
+                   if isunix
+                        BP=['/' BP]
+                    end
                    fprintf(fid,'''%s'' ',BP);
                 case "_riet_meas_datafile_replace"
                   disp('Warning: using untested feature "_riet_meas_datafile_replace"')  

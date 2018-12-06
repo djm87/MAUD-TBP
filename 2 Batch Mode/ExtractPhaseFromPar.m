@@ -51,7 +51,8 @@ function [phase] = ExtractPhaseFromPar(parName)
         
             %Get the space group for the phase
             loctmp=find(~cellfun(@isempty,strfind(phase.c{i},keywords{3})));
-            text=erase(phase.c{i}{loctmp},[keywords{3},' ']);
+            text=strrep(phase.c{i}{loctmp},[keywords{3},' '],'');
+            
             if and(i==2,any(text==':')) 
                 disp('Warning: MAUD cell origin option not handled, removing :# from space group')
                 text=text(1:end-2); %Removes the differientiation of cell origins
