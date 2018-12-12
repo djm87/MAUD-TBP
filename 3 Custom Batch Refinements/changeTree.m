@@ -172,7 +172,7 @@ end
 function [RefNum]=getNextRefNum(par)
     maxRefNum=0;
     keyvar='#ref';
-    output=searchParameterTree_V2(par,keyvar,1);
+    output=searchParameterTree(par,keyvar,1);
     for i=1:length(output)
         tmp=eval(output{i});
         szTmp=size(tmp,1);

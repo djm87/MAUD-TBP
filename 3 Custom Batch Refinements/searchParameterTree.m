@@ -60,7 +60,7 @@ function [output] = searchParameterTree(par,keyword,lvl)
                 end
             end
             catch
-               disp('debug') 
+%                disp('debug') 
             end
         end
     end
