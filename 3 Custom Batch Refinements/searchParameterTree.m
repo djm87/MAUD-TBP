@@ -32,8 +32,8 @@ function [output] = searchParameterTree(par,keyword,lvl)
             %First test if keyword is in the structName
             flag=true;
             for j=1:lvl
-                if contains(structName(j),keyword)
-                    searchOutput{searchCnt}=strcat('par.',string(join(structName(1:lvl),'.')));
+                if contains2(structName(j),keyword)
+                    searchOutput{searchCnt}=strcat('par.',char(strjoin(structName(1:lvl),'.')));
                     searchCnt=searchCnt+1;
                     flag=false;
                 end
@@ -42,25 +42,31 @@ function [output] = searchParameterTree(par,keyword,lvl)
             if flag
                 for j=1:size(par.(fname{i}),1)
                     if strcmp(class(par.(fname{i})),'cell')
-                      if any(contains(par.(fname{i}){j,:},keyword))
-                        searchOutput{searchCnt}=strcat('par.',string(join(structName(1:lvl),'.')));
+                        %handle the nested cell
+                        if strcmp(class(par.(fname{i}){1}),'cell')
+                            var = par.(fname{i}){j,:};  
+                        elseif strcmp(class(par.(fname{i}){1}),'char')
+                            var = par.(fname{i})(j,:); 
+                        end
+                      if any(contains2(par.(fname{i}){1},keyword))
+                        searchOutput{searchCnt}=strcat('par.',char(strjoin(structName(1:lvl),'.')));
                         searchCnt=searchCnt+1;
                       end
-                    elseif strcmp(class(par.(fname{i})),'string')
-                      if any(contains(par.(fname{i}),keyword))
-                        searchOutput{searchCnt}=strcat('par.',string(join(structName(1:lvl),'.')));
+                    elseif strcmp(class(par.(fname{i})),'char')
+                      if any(contains2(par.(fname{i}),keyword))
+                        searchOutput{searchCnt}=strcat('par.',char(strjoin(structName(1:lvl),'.')));
                         searchCnt=searchCnt+1;
                       end
                     elseif strcmp(class(par.(fname{i})),'double') 
-                      if any(contains(string(par.(fname{i})),keyword))
-                        searchOutput{searchCnt}=strcat('par.',string(join(structName(1:lvl),'.')));
+                      if any(contains2(num2str(par.(fname{i})),keyword))
+                        searchOutput{searchCnt}=strcat('par.',char(strjoin(structName(1:lvl),'.')));
                         searchCnt=searchCnt+1;
                       end
                     end
                 end
             end
             catch
-%                disp('debug') 
+                disp('debug') 
             end
         end
     end
