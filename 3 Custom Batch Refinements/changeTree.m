@@ -61,7 +61,7 @@ function [par]=removeRefTo(par,input,varargin)
     tmp = evaluateStruct(par,input);
     
     %Get data type
-    dataType = getDataType(value);
+    dataType = getDataType(tmp);
     
     %Get arguments
     loopId=get_option(varargin,'loop index')
@@ -129,7 +129,7 @@ function [par]=setEqualTo(par,input,varargin)
 
     %Get data type
     dataType1 = getDataType(tmp1);
-    dataType2 = getDataType(tmp1);
+    dataType2 = getDataType(tmp2);
     assert(dataType1==dataType2,'Can''t tie two different variable types');
 
     equalAdd=get_option(varargin,'equal add');
@@ -178,7 +178,7 @@ function [RefNum]=getNextRefNum(par)
         tmp = evaluateStruct(par,output{i});
 
         %Get data type
-        dataType = getDataType(value);
+        dataType = getDataType(tmp);
         
         switch dataType
             case 'refinable loop'
@@ -205,7 +205,7 @@ function [par]=removeAutotrace(par,input,varargin)
     tmp = evaluateStruct(par,input);
     
     %Get data type
-    dataType = getDataType(value);
+    dataType = getDataType(tmp);
     
     %Get arguments
     loopId=get_option(varargin,'loop index')
@@ -254,7 +254,7 @@ function [par]=addAutotrace(par,input,varargin)
     tmp = evaluateStruct(par,input);
     
     %Get data type
-    dataType = getDataType(value);
+    dataType = getDataType(tmp);
     
     %Get arguments
     loopId=get_option(varargin,'loop index')
@@ -300,7 +300,7 @@ function [par]=changeValueTo(par,input,varargin)
     tmp = evaluateStruct(par,input);
     
     %Get data type
-    dataType = getDataType(value);
+    dataType = getDataType(tmp);
     
     %Get arguments
     argvalue=get_option(varargin,'value');
@@ -384,7 +384,7 @@ function [par]=removeVarBKPoly(par,input)
     tmp = evaluateStruct(par,input);
     
     %Get data type
-    dataType = getDataType(value);
+    dataType = getDataType(tmp);
     
     switch dataType    
         case 'refinable loop'
@@ -408,7 +408,7 @@ function [par]=addVarBKPoly(par,input)
     tmp = evaluateStruct(par,input);
     
     %Get data type
-    dataType = getDataType(value);
+    dataType = getDataType(tmp);
     
     switch dataType    
         case 'refinable loop'
@@ -430,7 +430,7 @@ function [par]=fixParameter(par,input)
     tmp = evaluateStruct(par,input);
     
     %Get data type
-    dataType = getDataType(value);
+    dataType = getDataType(tmp);
     
     switch dataType    
         case 'refinable loop'
@@ -462,7 +462,7 @@ function [par]=refineParameter(par,input)
     tmp = evaluateStruct(par,input);
     
     %Get data type
-    dataType = getDataType(value);
+    dataType = getDataType(tmp);
     
     switch dataType    
         case 'refinable loop'
@@ -506,23 +506,23 @@ function [par]=updatePar(par,input,tmp)
             error('the number of split field names was not handled')
     end
 end
-function [value] = evaluateStruct(par,input)
-    if isa(input,'char')
-        value=eval(input);
-    elseif isa(input,'cell')
-        value=eval(input{1});
+function [tmp] = evaluateStruct(par,input)
+    if ischar(input)
+        tmp=eval(input);
+    elseif iscell(input)
+        tmp=eval(input{1});
     else
         error('unhandled type when evaluating input');
     end
 end
-function [dataType] = getDataType(value)
-    if and(isa(value{1},'cell'),any(contains2(value{1},'#min')))
+function [dataType] = getDataType(tmp)
+    if and(iscell(tmp{1}),any(contains2(tmp{1},'#min')))
         dataType='refinable loop';
-    elseif isa(value{1},'cell')
+    elseif iscell(tmp{1})
         dataType='non-refinable loop';
-    elseif and(isa(value{1},'char'),any(contains2(value{1},'#min')))
+    elseif and(ischar(tmp{1}),any(contains2(tmp{1},'#min')))
         dataType='refinable variable';
-    elseif isa(value{1},'char')
+    elseif ischar(tmp{1})
         dataType='non-refinable variable'; 
     else 
         error('unhandle data type!')

@@ -41,23 +41,23 @@ function [output] = searchParameterTree(par,keyword,lvl)
             %If keyword isn't in the structName then search values
             if flag
                 for j=1:size(par.(fname{i}),1)
-                    if strcmp(class(par.(fname{i})),'cell')
+                    if iscell(par.(fname{i}))
                         %handle the nested cell
-                        if strcmp(class(par.(fname{i}){1}),'cell')
+                        if iscell(par.(fname{i}){1})
                             var = par.(fname{i}){j,:};  
-                        elseif strcmp(class(par.(fname{i}){1}),'char')
+                        elseif ischar(par.(fname{i}){1})
                             var = par.(fname{i})(j,:); 
                         end
                       if any(contains2(par.(fname{i}){1},keyword))
                         searchOutput{searchCnt}=strcat('par.',char(strjoin(structName(1:lvl),'.')));
                         searchCnt=searchCnt+1;
                       end
-                    elseif strcmp(class(par.(fname{i})),'char')
+                    elseif ischar(par.(fname{i}))
                       if any(contains2(par.(fname{i}),keyword))
                         searchOutput{searchCnt}=strcat('par.',char(strjoin(structName(1:lvl),'.')));
                         searchCnt=searchCnt+1;
                       end
-                    elseif strcmp(class(par.(fname{i})),'double') 
+                    elseif isa(par.(fname{i}),'double') 
                       if any(contains2(num2str(par.(fname{i})),keyword))
                         searchOutput{searchCnt}=strcat('par.',char(strjoin(structName(1:lvl),'.')));
                         searchCnt=searchCnt+1;

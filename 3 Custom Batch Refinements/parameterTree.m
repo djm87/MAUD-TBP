@@ -38,7 +38,7 @@ end
         par = storeStartEndObject(par,fname,id);
         
         count=id(1);
-        
+
         %This loops through the object trying pull out loops, variables,
         %etc.
         while count<id(2)
@@ -55,8 +55,10 @@ end
                     ~contains2(c(count+1),'refln_index_h') && ...
                     ~contains2(c(count+1),'odf_values'))
                 
-               [c,par,count,last]=processLoop(par,c,count,fname,last,flag);
-               
+               [c,par,count,lastout]=processLoop(par,c,count,fname,last,flag);
+               if lastout~=last
+                  disp('debug') 
+               end
             elseif contains2(c(count),'#min')
                 
                 [c,par]=getParameter(par,c,count,fname,flag);
@@ -88,7 +90,8 @@ function [par,count,c]=readContinualList(par,c,count,object,last,lvl,flag)
       id=find(contains2(c(count:last),object),1,'first');
       count=id;
       line=c(count);
-      fname=line{1};
+      [fname]=createVarName(line{1})
+
       while count<last 
             count=count+1;
             line=c(count);
@@ -128,6 +131,7 @@ function [fname]=createVarName(fname)
         fname=regexprep(fname, '/','_');
         fname=regexprep(fname, '%','');
         fname=regexprep(fname, '-','_');
+        fname=regexprep(fname, '~','_');
         
         if contains2(fname,'gda')
             strid=strfind(fname,'g');
@@ -156,7 +160,11 @@ function [id]= getIdObject(c,count,last,object)
 %getIdObject get the beginning and the end of an object
     id(1)=find(contains2(c(count:last),object),1,'first')+count-1;
     end_name=['#end_' c{id(1)}(2:end)];
+    try
     id(2)=find(contains2(c(count:last),end_name),1,'first')+count-1;
+    catch
+       error('The read in of the phase will break if you name your phase the same as atom types that are present')
+    end
 end
 function [par]= storeStartEndObject(par,fname,id)
 %storeStartEndObject write the beginning and ending line number in the
