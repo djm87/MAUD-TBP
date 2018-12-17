@@ -26,18 +26,18 @@ function [lc] = WriteBatchInputs(lc)
 
             for k=1:length(lc.BatchOptions(:,lc.BS))       
                 switch lc.BatchOptions{k,lc.BS}
-                    case "_riet_analysis_file"
+                    case '_riet_analysis_file'
                       fprintf(fid,'%s ',lc.InputPar.BatchPath{id,lc.BS});
-                    case "_riet_analysis_wizard_index"
+                    case '_riet_analysis_wizard_index'
                       fprintf(fid,'%s ',lc.NIter{id,lc.BS});
-                    case "_riet_analysis_iteration_number"
+                    case '_riet_analysis_iteration_number'
                       fprintf(fid,'%s ',lc.WizNum{id,lc.BS});
-                    case "_riet_analysis_fileToSave"
+                    case '_riet_analysis_fileToSave'
                       fprintf(fid,'%s ',lc.OutputPar.BatchPath{id,lc.BS});
-                    case "_riet_meas_datafile_name"
+                    case '_riet_meas_datafile_name'
                       disp('Warning: using untested feature "_riet_meas_datafile_name"')  
                       %fprintf(fid,'%s ',lc.measDatafileName.BatchPath{id,lc.BS});
-                    case "_riet_append_simple_result_to"
+                    case '_riet_append_simple_result_to'
                       % handle potential write conflicts 
                       newstr=['_CPU' int2str(i) '.txt'];
                       lc.OutputResult.BatchPathCPU{id,lc.BS}=strrep(...
@@ -45,7 +45,7 @@ function [lc] = WriteBatchInputs(lc)
                       lc.OutputResult.NameCPU{id,lc.BS}=strrep(...
                           lc.OutputResult.Name{id,lc.BS},'.txt',newstr);
                       fprintf(fid,'%s ',lc.OutputResult.BatchPathCPU{id,lc.BS});
-                    case "_riet_append_result_to"
+                    case '_riet_append_result_to'
                       % handle potential write conflicts 
                       newstr=['_CPU' int2str(i) '.txt'];
                       lc.OutputResultAutotrace.BatchPathCPU{id,lc.BS}=strrep(...
@@ -53,13 +53,13 @@ function [lc] = WriteBatchInputs(lc)
                       lc.OutputResultAutotrace.NameCPU{id,lc.BS}=strrep(...
                           lc.OutputResultAutotrace.Name{id,lc.BS},'.txt',newstr);
                       fprintf(fid,'%s ',lc.OutputResultAutotrace.BatchPathCPU{id,lc.BS});
-                    case "_riet_meas_datafile_replace"
+                    case '_riet_meas_datafile_replace'
                       disp('Warning: using untested feature "_riet_meas_datafile_replace"')  
                       %fprintf(fid,'%s ',lc.MeasDatafileReplace{id,lc.BS});
-                    case "_maud_background_add_automatic"
+                    case '_maud_background_add_automatic'
                       disp('Warning: using untested feature "_maud_background_add_automatic"')  
                       %fprintf(fid,'%s ',lc.AutoAddBK{id,lc.BS});
-                    case "_maud_output_plot_filename"
+                    case '_maud_output_plot_filename'
                       disp('Warning: using untested feature "_maud_output_plot_filename"')    
                       %fprintf(fid,'%s ',lc.OutputPlot.BatchPath{id,lc.BS});
                 end
