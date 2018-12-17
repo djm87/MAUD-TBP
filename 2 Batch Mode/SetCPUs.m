@@ -3,9 +3,9 @@ function [lc] = SetCPUs(lc)
 %max machine cores. If ncases < cores set, set machine cores to ncases
 
         if ispc 
-            [status numprocs]=system("echo %number_of_processors%");
+            [status numprocs]=system('echo %number_of_processors%');
         elseif isunix
-            [status,numprocs] = system("nproc");
+            [status,numprocs] = system('nproc');
         end
 
         if lc.options{1,2}>numprocs

@@ -12,7 +12,7 @@ function [] = prepareMAUDBatch(cases,sampName,templateParName)
     for i=1:length(sampName)    
         fprintf('Starting...%s\n',sampName{i})
         fprintf('==================================================\n')
-        par=readPar(templateParName{i});
+        par=readPar(templateParName{i},'');
         assert(any(contains2(par,calibrationFile.name)),...
         '!!!Using a template with calibration file different than Sven sent!!!')
 
