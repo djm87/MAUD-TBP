@@ -73,6 +73,10 @@ end
                 
             elseif contains2(c(count),'_rita_wimv_odf_resolution')
                 
+                [c,par]=getParameter(par,c,count,fname,flag);
+                
+            elseif contains2(c(count),'_rita_odf_refinable')
+                
                 [c,par]=getParameter(par,c,count,fname,flag);  
 
             elseif contains2(c(count),object)
@@ -90,7 +94,7 @@ function [par,count,c]=readContinualList(par,c,count,object,last,lvl,flag)
       id=find(contains2(c(count:last),object),1,'first');
       count=id;
       line=c(count);
-      [fname]=createVarName(line{1})
+      [fname]=createVarName(line{1});
 
       while count<last 
             count=count+1;

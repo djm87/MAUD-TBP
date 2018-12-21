@@ -1,4 +1,4 @@
-function [output] = searchParameterTree(par,keyword,lvl)
+function [output] = searchParameterTree(par,keyword,lvl,varargin)
 %This function searches a struct and finds a keyword
 %There are two types of key words: 1) is in the struct fieldname, and 2) is in the
 %strings or data stored in a particular field.
@@ -19,6 +19,8 @@ function [output] = searchParameterTree(par,keyword,lvl)
         searchOutput={};
         searchCnt=1;
     end
+    
+    mode=get_option(varargin,'mode');
     
     fname=fieldnames(par);
     output={};
@@ -48,19 +50,18 @@ function [output] = searchParameterTree(par,keyword,lvl)
                         elseif ischar(par.(fname{i}){1})
                             var = par.(fname{i})(j,:); 
                         end
-                      if any(contains2(par.(fname{i}){1},keyword))
-                        searchOutput{searchCnt}=strcat('par.',char(strjoin(structName(1:lvl),'.')));
-                        searchCnt=searchCnt+1;
+                      if any(contains2(var,keyword))
+                        getOutput(var,keyword,lvl,mode)
                       end
                     elseif ischar(par.(fname{i}))
-                      if any(contains2(par.(fname{i}),keyword))
-                        searchOutput{searchCnt}=strcat('par.',char(strjoin(structName(1:lvl),'.')));
-                        searchCnt=searchCnt+1;
+                      var=par.(fname{i});
+                      if any(contains2(var,keyword))
+                        getOutput(var,keyword,lvl,mode)
                       end
                     elseif isa(par.(fname{i}),'double') 
-                      if any(contains2(num2str(par.(fname{i})),keyword))
-                        searchOutput{searchCnt}=strcat('par.',char(strjoin(structName(1:lvl),'.')));
-                        searchCnt=searchCnt+1;
+                      var=num2str(par.(fname{i}));
+                      if any(contains2(var,keyword))
+                        getOutput(var,keyword,lvl,mode)
                       end
                     end
                 end
@@ -74,4 +75,22 @@ function [output] = searchParameterTree(par,keyword,lvl)
     if lvl==1
     output=searchOutput';
     end
+end
+function []=getOutput(var,keyword,lvl,mode)
+    global searchOutput
+    global searchCnt
+    global structName
+    
+      if strcmp(mode,'exact')
+        id=find(contains2(var,keyword));
+        if ~isempty(id)
+            if strcmp(var{id},keyword)
+              searchOutput{searchCnt}=strcat('par.',char(strjoin(structName(1:lvl),'.')));
+              searchCnt=searchCnt+1;
+            end
+        end
+      else
+          searchOutput{searchCnt}=strcat('par.',char(strjoin(structName(1:lvl),'.')));
+          searchCnt=searchCnt+1;
+      end
 end

@@ -11,7 +11,6 @@ function [par] = changeTree(par,input,varargin)
             
         case 'tie variables together'
             disp('Note the first variable is the master')
-            assert(length(input)==2,'only tying two non-loop variables is supported')
             par=setEqualTo(par,input,varargin{:});
             
         case 'remove output to file'
@@ -56,82 +55,61 @@ function [par] = changeTree(par,input,varargin)
             
     end %switch
 end 
-function [par]=removeRefTo(par,input,varargin)
-    %Access location
-    tmp = evaluateStruct(par,input);
-    
-    %Get data type
-    dataType = getDataType(tmp);
-    
-    %Get arguments
-    loopId=get_option(varargin,'loop index')
-    
-    switch dataType    
-        case 'refinable loop'
-           szTmp=size(tmp,1);
-           if ~isempty(loopId)
-               assert(szTmp>=loopId+1,'loop index greater than loop')
-               if any(contains2(tmp{loopId+1},'#equalTo'))
-                 tmp2=tmp{loopId+1};  
-                 id=find(tmp2=='#equalTo',1)
-                 tmp2(id:end)=[];
-                 tmp{loopId+1}=tmp2;
-                 [par]=updatePar(par,input,tmp);  
-               elseif any(contains2(tmp{loopId+1},'#ref'))
-                 tmp2=tmp{loopId+1};  
-                 tmp2(end)=[];
-                 tmp{loopId+1}=tmp2;
-                 [par]=updatePar(par,input,tmp);
-               end
-           else   
-             disp('Warning: Passed in loop variable without setting "loop index"')
-             disp('Going to change all variables in loop')              
-             for i=2:szTmp %start at 2 to skip the loop variable name
-               if any(contains2(tmp{i},'#equalTo'))
-                 tmp2=tmp{i};  
-                 id=find(tmp2=='#equalTo',1)
-                 tmp2(id:end)=[];
-                 tmp{i}=tmp2;
-                 [par]=updatePar(par,input,tmp);  
-               elseif any(contains2(tmp{i},'#ref'))
-                 tmp2=tmp{i};  
-                 tmp2(end)=[];
-                 tmp{i}=tmp2;
-                 [par]=updatePar(par,input,tmp);
-               end
-             end
-           end
-        case 'refinable variable'
-           if any(contains2(tmp,'#equalTo'))
-             id=find(strcmp(tmp,'#equalTo'),1)
-             tmp(id:end)=[];
-             [par]=updatePar(par,input,tmp); 
-           elseif any(contains2(tmp,'#ref'))
-             tmp(end)=[];
-             [par]=updatePar(par,input,tmp);  
-           end
-        case 'non-refinable variable'
-            error('autotrace just for refinable parameters')
-            
-        case 'non-refinable loop'
-            error('autotrace just for refinable parameters')
-            
-        otherwise
-            error('Passed in non-refineable parameter... nothing done!')
+function [par]=removeRefTo(par,refNum2Remove,varargin)
+    assert(~isempty(strfind(refNum2Remove,'#ref')),...
+        'To remove a refer pass in the reference number as a cell e.g. {#ref1024}')
+    output=searchParameterTree(par,refNum2Remove,1,'mode','exact');
+    for i=1:length(output)
+        %Access location
+        tmp = evaluateStruct(par,output{i});
+        
+        %Get data type
+        dataType = getDataType(tmp);
+        
+        switch dataType
+            case 'refinable loop'
+                flag=false;
+                for j=1:size(tmp,1)
+                    tmpend=tmp{j}(end);
+                    if strcmp(tmpend{1},refNum2Remove)
+                        id=find(contains2(tmp{j},'#equalTo'));
+                        if ~isempty(id)
+                           tmp{j}=tmp{j}(1:id-1); 
+                        else
+                           tmp{j}=tmp{j}(1:end-1);
+                        end
+                        flag=true;
+                    end
+                end
+                if flag 
+                   [par]=updatePar(par,output{i},tmp); 
+                end
+            case 'refinable variable' 
+                tmpend=tmp(end);
+                 if strcmp(tmpend{1},refNum2Remove)
+                    id=find(contains2(tmp,'#equalTo'));
+                    if ~isempty(id)
+                       tmp=tmp(1:id-1); 
+                    else
+                       tmp=tmp(1:end-1);
+                    end
+                    [par]=updatePar(par,output{i},tmp);
+                end
+        end
     end
-    
 end
 function [par]=setEqualTo(par,input,varargin)
     %Access location
-    tmp1 = evaluateStruct(par,input{1});
-    tmp2 = evaluateStruct(par,input{2});
-    assert(size(input,1)<3,'Can only handle variable pairs')
-
+    szInput=length(input);
+    for i=1:szInput
+        tmp{i} = evaluateStruct(par,input{i});
+        dataType{i} = getDataType(tmp{i});
+    end
+    
     %Get data type
-    dataType1 = getDataType(tmp1);
-    dataType2 = getDataType(tmp2);
-    assert(dataType1==dataType2,'Can''t tie two different variable types');
-
+    assert(all(contains2(dataType,'refinable variable')),'Can''t tie different variable types');
+    assert(length(dataType)>1,'Need to pass atleast two variable...')
+    
     equalAdd=get_option(varargin,'equal add');
     equalMult=get_option(varargin,'equal multiply');
     
@@ -144,30 +122,55 @@ function [par]=setEqualTo(par,input,varargin)
     
     RefNum=getNextRefNum(par);
     
-    switch dataType1 
+    switch dataType{1}
         case 'refinable loop'
             error(' Cannot handle the loop variables - you can program it :)')
         case 'refinable variable'
-            if (any(contains2(tmp1,'#equalTo')) || any(contains2(tmp2,'#equalTo')))
-               disp('There is already a reference in one of the variables')
-               disp('Remove the current reference before applying a new one')
+            [flag,refNumUsed]=checkForRef(tmp,szInput);
+            if flag
+               disp('There is already a reference in one or more of the variables.')
+               disp('Remove the current references before applying a new one.')
+               disp('References already associated with variables you are trying to tie:')
+               for i=1:length(refNumUsed)
+                fprintf('%s\n',refNumUsed{i})
+               end
             else
-             lenTmp1=length(tmp1);
-             lenTmp2=length(tmp2);
-             tmp1{lenTmp1+1}=strcat('#ref',num2str(RefNum));
-             tmp2{lenTmp2+1}='#equalTo';
-             tmp2{lenTmp2+2}=sprintf('%3.1f',equalAdd);
-             tmp2{lenTmp2+3}='+';
-             tmp2{lenTmp2+4}=sprintf('%3.1f',equalMult);
-             tmp2{lenTmp2+5}='*';
-             tmp2{lenTmp2+6}=strcat('#ref',num2str(RefNum));
-             [par]=updatePar(par,input{1},tmp1);
-             [par]=updatePar(par,input{2},tmp2); 
+                %Set the master
+                lenTmp1=length(tmp{1});
+                tmp{1}{lenTmp1+1}=strcat('#ref',num2str(RefNum));
+                [par]=updatePar(par,input{1},tmp{1});
+                
+                for i=2:szInput
+                 lenTmpi=length(tmp{i});
+                 tmp{i}{lenTmpi+1}='#equalTo';
+                 tmp{i}{lenTmpi+2}=sprintf('%3.1f',equalAdd);
+                 tmp{i}{lenTmpi+3}='+';
+                 tmp{i}{lenTmpi+4}=sprintf('%3.1f',equalMult);
+                 tmp{i}{lenTmpi+5}='*';
+                 tmp{i}{lenTmpi+6}=strcat('#ref',num2str(RefNum));
+                 
+                 [par]=updatePar(par,input{i},tmp{i}); 
+                end
             end
-        otherwise
-            error('Unsupported dataType passed in.. check input')
+        case 'non-refinable variable'
+            disp('non-refinable variable not supported for tying')
+            
+        case 'non-refinable loop'
+            disp('non-refinable loop not supported for tying ')
     end
 
+end
+function [flag,refNumUsed]=checkForRef(tmp,szInput)
+    flag=false;
+    cnt=1;
+    refNumUsed=[];
+    for i=1:szInput
+       if any(contains2(tmp{i},'#ref'))
+           flag=true;
+           refNumUsed{cnt}=tmp{i}{end};
+           cnt=cnt+1;
+       end
+    end
 end
 function [RefNum]=getNextRefNum(par)
     maxRefNum=0;
@@ -200,7 +203,6 @@ function [RefNum]=getNextRefNum(par)
     RefNum=maxRefNum+1;
 end
 function [par]=removeAutotrace(par,input,varargin)
-
     %Access location
     tmp = evaluateStruct(par,input);
     
@@ -208,46 +210,51 @@ function [par]=removeAutotrace(par,input,varargin)
     dataType = getDataType(tmp);
     
     %Get arguments
-    loopId=get_option(varargin,'loop index')
+    loopId=get_option(varargin,'loop index');
+    assert(isnumeric(loopId)|| isempty(loopId),'loopId must be an integer');
 
     switch dataType    
         case 'refinable loop'
            szTmp=size(tmp,1);
            if ~isempty(loopId)
-               assert(szTmp>=loopId+1,'loop index greater than loop')
-               if strcmp(tmp{loopId+1}(2),'#autotrace')
-                 tmp2=tmp{loopId+1};  
-                 tmp2(2)=[];
-                 tmp{loopId+1}=tmp2;
-                 [par]=updatePar(par,input,tmp);   
+               if szTmp>=loopId
+                   if strcmp(tmp{loopId}(2),'#autotrace')
+                     tmp2=tmp{loopId};  
+                     tmp2(2)=[];
+                     tmp{loopId}=tmp2;
+                   end
+               else
+                   disp('loopId specified was greater than the loop, doing nothing')
                end
            else   
-             disp('Warning: Passed in loop variable without setting "loop index"')
-             disp('Going to change all variables in loop')              
-             for i=2:szTmp %start at 2 to skip the loop variable name
+             disp('Warning: Passed in loop variable without setting "loop index"');
+             disp('Going to change all variables in loop');              
+             for i=1:szTmp 
                if strcmp(tmp{i}(2),'#autotrace')
                  tmp2=tmp{i};  
                  tmp2(2)=[];
-                 tmp{i}=tmp2
+                 tmp{i}=tmp2;
                  [par]=updatePar(par,input,tmp);    
                end
              end
            end
+            
         case 'refinable variable'
            if strcmp(tmp(3),'#autotrace')
              tmp(3)=[];
              [par]=updatePar(par,input,tmp);   
-           end
+           end 
           
         case 'non-refinable variable'
-            error('autotrace just for refinable parameters')
+            disp('autotrace just for refinable parameters')
             
         case 'non-refinable loop'
-            error('autotrace just for refinable parameters')
+            disp('autotrace just for refinable parameters')
             
         otherwise
             disp('Passed in non-refineable parameter... nothing done!')
     end
+    [par]=updatePar(par,input,tmp);
 end
 function [par]=addAutotrace(par,input,varargin)
     %Access location
@@ -257,43 +264,48 @@ function [par]=addAutotrace(par,input,varargin)
     dataType = getDataType(tmp);
     
     %Get arguments
-    loopId=get_option(varargin,'loop index')
+    loopId=get_option(varargin,'loop index');
+    assert(isnumeric(loopId)|| isempty(loopId),'loopId must be an integer');
 
     switch dataType    
         case 'refinable loop'
            szTmp=size(tmp,1);
            if ~isempty(loopId)
-               assert(szTmp>=loopId+1,'loop index greater than loop')
-               if ~strcmp(tmp{loopId+1}(2),'#autotrace')
-                tmp{loopId+1}=[tmp{loopId+1}(1);{'#autotrace'};tmp{loopId+1}(2:end)];
-                [par]=updatePar(par,input,tmp);   
+               if szTmp>=loopId
+                   if ~strcmp(tmp{loopId}(2),'#autotrace')
+                    tmp{loopId}=[tmp{loopId}(1);{'#autotrace'};tmp{loopId}(2:end)];
+                   end
+               else
+                   disp('loopId specified was greater than the loop, doing nothing')
                end
            else   
-             disp('Warning: Passed in loop variable without setting "loop index"')
-             disp('Going to change all variables in loop')              
-             for i=2:szTmp %start at 2 to skip the loop variable name
+             disp('Warning: Passed in loop variable without setting "loop index"');
+             disp('Going to change all variables in loop');              
+             for i=1:szTmp 
                if ~strcmp(tmp{i}(2),'#autotrace')
                  tmp{i}=[tmp{i}(1);{'#autotrace'};tmp{i}(2:end)];
-                 [par]=updatePar(par,input,tmp);   
                end
              end
            end
             
         case 'refinable variable'
            if ~strcmp(tmp(3),'#autotrace')
-             tmp=[tmp(1:2);{'#autotrace'};tmp(3:end)];
-             [par]=updatePar(par,input,tmp);
+             if size(tmp,1)<size(tmp,2)
+                 tmp=tmp';
+             end
+             tmp=[tmp(1:2);{'#autotrace'};tmp(3:end)]';
            end
           
         case 'non-refinable variable'
-            error('autotrace just for refinable parameters')
+            disp('autotrace just for refinable parameters')
             
         case 'non-refinable loop'
-            error('autotrace just for refinable parameters')
+            disp('autotrace just for refinable parameters')
             
         otherwise
             disp('Passed in non-refineable parameter... nothing done!')
     end
+    [par]=updatePar(par,input,tmp);
 end
 function [par]=changeValueTo(par,input,varargin)
     %Access location
@@ -306,78 +318,46 @@ function [par]=changeValueTo(par,input,varargin)
     argvalue=get_option(varargin,'value');
     argmin=get_option(varargin,'min');
     argmax=get_option(varargin,'max');
+    assert(ischar(argvalue) || isempty(argvalue),'inputs must be strings')
+    assert(ischar(argmin) || isempty(argmin),'inputs must be strings')
+    assert(ischar(argmax) || isempty(argmax),'inputs must be strings')
 
-    loopId=get_option(varargin,'loop index')
-    
-    %Set do assignment false unless there is a change
-    flag=false;
+    loopId=get_option(varargin,'loop index');
+    assert(isnumeric(loopId)|| isempty(loopId),'loopId must be an integer')
     
     switch dataType    
         case 'refinable loop'
            szTmp=size(tmp,1);
            if ~isempty(loopId)
-               assert(szTmp>=loopId+1,'loop index greater than loop')
-               if ~isempty(argvalue)
-                tmp{loopId+1}(1)={argvalue};
-                flag=true;
-               end
-               if ~isempty(argmin)
-                tmp{loopId+1}(3)={argmin};
-                flag=true; 
-               end
-              if ~isempty(argmax)
-                tmp{loopId+1}(5)={argmax};
-                flag=true;  
-              end
+              
+              if szTmp>=loopId
+                 tmp{loopId}=update(tmp{loopId},argvalue,argmin,argmax,dataType);
+             else
+                  disp('Warning: loopId exceeded the size of the loop, doing nothing')
+             end
            else
              disp('Warning: Passed in loop variable without setting "loop index"')
              disp('Going to change all variables in loop')  
 
-             for i=2:szTmp %start at 2 to skip the loop variable name
-    %            tmp1=tmp{i}(1); %Needed for the nested cell...
-               if ~isempty(argvalue)
-                tmp{i}(1)={argvalue};
-                flag=true;
-               end
-               if ~isempty(argmin)
-                tmp{i}(3)={argmin};
-                flag=true; 
-               end
-              if ~isempty(argmax)
-                tmp{i}(5)={argmax};
-                flag=true;  
-              end  
+             for i=1:szTmp 
+                 tmp{i}=update(tmp{i},argvalue,argmin,argmax,dataType);
              end
            end
             
         case 'refinable variable'
-           if ~isempty(argvalue)
-            tmp{2}={argvalue};
-            flag=true;
-           end
-           if ~isempty(argmin)
-            tmp{4}={argmin};
-            flag=true; 
-           end
-          if ~isempty(argmax)
-            tmp{6}={argmax};
-            flag=true;  
-          end  
+            tmp=update(tmp,argvalue,argmin,argmax,dataType);
           
         case 'non-refinable variable'
-            tmp{2}=argvalue;
-            flag=true; 
-            
+            tmp=update(tmp,argvalue,argmin,argmax,dataType);
         case 'non-refinable loop'
-            error('non-refinable loop is not handled')
+            error('non-refinable loop is not yet handled')
             
         otherwise
-            disp('Passed in non-refineable parameter... nothing done!')
+            disp('Passed in non-changable parameter... nothing done!')
     end
     
-    if flag
-        [par]=updatePar(par,input,tmp);
-    end
+    [par]=updatePar(par,input,tmp);
+
 end
 function [par]=removeVarBKPoly(par,input)
     %Access location
@@ -392,9 +372,9 @@ function [par]=removeVarBKPoly(par,input)
                 %Get size of background polynomial loop
                 szTmp=size(tmp,1);
 
-                %Add to end of loop
+                %remove end of loop
                 if szTmp > 0
-                    tmp{szTmp}=[];
+                    tmp(szTmp)=[];
 
                     par = updatePar(par,input,tmp);
                 end
@@ -417,7 +397,7 @@ function [par]=addVarBKPoly(par,input)
                 szTmp=size(tmp,1);
 
                 %Add to end of loop
-                tmp{szTmp+1}={'0.0';'#min';'0.0';'#max';'0.0'};
+                tmp{szTmp+1,1}={'0.0';'#min';'0.0';'#max';'0.0'};
 
                 par = updatePar(par,input,tmp);
             end
@@ -434,9 +414,8 @@ function [par]=fixParameter(par,input)
     
     switch dataType    
         case 'refinable loop'
-            disp('Look into if loops are handled')
             szTmp=size(tmp,1);
-            for i=2:szTmp %start at 2 to skip the loop variable name
+            for i=1:szTmp 
                tmp1=tmp{i}(1); %Needed for the nested cell...
                if contains2(tmp1{1},'(');
                  loc=strfind(tmp1{1},'(');
@@ -466,9 +445,8 @@ function [par]=refineParameter(par,input)
     
     switch dataType    
         case 'refinable loop'
-            disp('Look into if loops are handled')
             szTmp=size(tmp,1);
-            for i=2:szTmp %start at 2 to skip the loop variable name
+            for i=1:szTmp 
                tmp2=tmp{i}(1); %Needed for the nested cell...
                if ~contains2(tmp2{1},'(')
                  tmp{i}(1)={strcat(tmp2{1},'(0.0)')};
@@ -520,11 +498,47 @@ function [dataType] = getDataType(tmp)
         dataType='refinable loop';
     elseif iscell(tmp{1})
         dataType='non-refinable loop';
-    elseif and(ischar(tmp{1}),any(contains2(tmp{1},'#min')))
+    elseif and(ischar(tmp{1}),any(contains2(tmp,'#min')))
         dataType='refinable variable';
     elseif ischar(tmp{1})
         dataType='non-refinable variable'; 
     else 
         error('unhandle data type!')
     end
+end
+function tmp = update(tmp,argvalue,argmin,argmax,dataType) 
+    switch dataType 
+        case 'refinable loop' 
+               if ~isempty(argvalue)
+                tmp(1)={argvalue};
+               end
+               if ~isempty(argmin)
+                ind=find(contains2(tmp,'#min'))+1;
+                tmp(ind)={argmin};
+               end
+              if ~isempty(argmax)
+                ind=find(contains2(tmp,'#max'))+1;
+                tmp(ind)={argmax};
+              end  
+        case 'refinable variable'
+               if ~isempty(argvalue)
+                tmp(2)={argvalue};
+               end
+               if ~isempty(argmin)
+                ind=find(contains2(tmp,'#min'))+1;
+                tmp(ind)={argmin};
+               end
+              if ~isempty(argmax)
+                ind=find(contains2(tmp,'#max'))+1;
+                tmp(ind)={argmax};
+              end     
+        case 'non-refinable variable'
+               if ~isempty(argvalue)
+                tmp(2)={argvalue};
+               end
+        otherwise
+            disp('unhandled  type in updateNextPlace')
+            
+    end
+    
 end

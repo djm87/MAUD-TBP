@@ -40,24 +40,42 @@ function [] = userWizard(parName,WizNum)
 
     %Set the refinement parameters in the parameterTree
     switch WizNum 
-    case 1
-        [par] = changeTree(par,foutput,'run options',options{9});
+    case 10000 
+        %This runs a test on the core parameter functions to make sure
+        %they behave the same as in MAUD
+        
+        %all_refined searches the par for '(' and either adds, remove,
+        %autotrace or fixes the refined variable by removing '(#.##)'
+        par = all_refined(par,2);
+        par = all_refined(par,6);
+        par = all_refined(par,7);
+        
+        par = background_pars(par,1)
+        par = scale_pars(par,1)
+        par = basic_pars(par,1)
+        par = bound_bfactor(par,8)
+        par = microstructure(par,1)
+        par = refine_texture(par,'true',5)
     otherwise
         error('specified a wizard number that doesn''t exist!');
     end
     
-    %Write the 
+    %Write the changes to a par
     [par,count,c_updated]=parameterTree(par,c,1,last,1,'update c');
     writePar(c_updated,'test.par')
 
 end
 %% This block reproduces most of the behavior of core MAUD TreeTable Commands 
 function par = all_refined(par,option)
+    assert(option==2 || option==6 || option==7,...
+        'Can only pass option 2, 6, 7 ')
     keyvar='(';
-    foutput=searchParameterTree(par,keyvar,1);
-    [par] = changeTree(par,foutput,'run options',option);
+    output=searchParameterTree(par,keyvar,1);
+    [par] = changeTree(par,output,'run options',par.options{option});
 end
 function par = background_pars(par,option)
+    assert(option==1 || option==2 || option==6 || option==7,...
+        'Can only pass option 1, 2, 6, 7 ')
     %This handles background peaks and the polynomials.
     keyvar='riet_par_background_pol';
     output{1}=searchParameterTree(par,keyvar,1);
@@ -65,19 +83,25 @@ function par = background_pars(par,option)
     output{2}=searchParameterTree(par,keyvar,1);
     keyvar='riet_par_background_peak_2th'
     output{3}=searchParameterTree(par,keyvar,1);
-    keyvar='iet_par_background_peak_hwhm'
+    keyvar='riet_par_background_peak_hwhm'
     output{4}=searchParameterTree(par,keyvar,1);
 
     foutput=vertcat(output{1},output{2},output{3},output{4});
-    [par] = changeTree(par,foutput,'run options',option);
+    [par] = changeTree(par,foutput,'run options',par.options{option});
 end
 function par = scale_pars(par,option)
+    assert(option==1 || option==2 || option==6 || option==7,...
+        'Can only pass option 1, 2, 6, 7 ')
+    
     keyvar='inst_inc_spectrum_scale_factor';
-
-    foutput=searchParameterTree(par,keyvar,1);
-    [par] = changeTree(par,foutput,'run options',option);
+    output=searchParameterTree(par,keyvar,1);
+    
+    [par] = changeTree(par,output,'run options',par.options{option});
 end
 function par = basic_pars(par,option)
+    assert(option==1 || option==2 || option==6 || option==7,...
+        'Can only pass option 1, 2, 6, 7 ')
+    
     keyvar='instrument_bank_difc';
     output{1}=searchParameterTree(par,keyvar,1);
     keyvar='cell_length';
@@ -86,23 +110,30 @@ function par = basic_pars(par,option)
     output{3}=searchParameterTree(par,keyvar,1);
 
     foutput=vertcat(output{1},output{2},output{3});
-    [par] = changeTree(par,foutput,'run options',option);
+    [par] = changeTree(par,foutput,'run options',par.options{option});
 end
 function par = bound_bfactor(par,option)
+    assert(option==8 || option==9,'Can only pass option 8 or 9')
+
     keyvar='atom_site_B_iso_or_equiv';
     foutput=searchParameterTree(par,keyvar,1);
     
-    len=length(foutput);
-    if len>1
+    if option==8
         [par] = changeTree(par,foutput,'run options',par.options{option});
-        for i = 2:len
-            [par] = changeTree(par,foutput([1,i]),'run options',par.options{8});
+    elseif option==9
+        for i =1:length(foutput)
+            tmp=eval(foutput{i});
+            tmpend=tmp(end);
+            if contains2(tmpend,'#ref')
+                [par] = changeTree(par,tmpend,'run options',par.options{option});
+            end
         end
-
-    else
     end
 end
 function par = microstructure(par,option)
+    assert(option==1 || option==2 || option==6 || option==7,...
+        'Can only pass option 1, 2, 6, 7 ')
+    
     keyvar='riet_par_cryst_size';
     output{1}=searchParameterTree(par,keyvar,1);
     keyvar='riet_par_rs_microstrain';
@@ -110,15 +141,14 @@ function par = microstructure(par,option)
 
 
     foutput=vertcat(output{1},output{2});
-    [par] = changeTree(par,foutput,'run options',option);
+    [par] = changeTree(par,foutput,'run options',par.options{option});
 end
-function par = texture(par,option)
-    keyvar='_rita_odf_refinable'; %Need to add scoop of odf parameters
-    foutput=searchParameterTree(par,keyvar,1);
+function par = refine_texture(par,value,option)
+    assert(option==5 && (strcmp(value,'true') || strcmp(value,'false')),...
+        'Can only pass option 5 and value must be either ''true'' or ''false''')
+    
+    keyvar='_rita_odf_refinable'; %Need to add scope of odf parameters
+    output=searchParameterTree(par,keyvar,1);
 
-    foutput=vertcat(output{1},output{2});
-    [par] = changeTree(par,foutput,'run options',option);
+    [par] = changeTree(par,output,'run options',par.options{option},'value',value);
 end
-function par = backgrounds(par,option)
-
-end 
