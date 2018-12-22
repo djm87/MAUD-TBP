@@ -219,7 +219,7 @@ function [c,par,count,last]=processLoop(par,c,count,fname,last,flag)
                 count=count-1;
                 last=last-1;
             elseif ~all(strcmp(splitline',strcat(par.(fname).(var){cnt})))    
-                c(count)=strjoin(par.(fname).(var){cnt});
+                c{count}=strjoin(par.(fname).(var){cnt});
             end
         end
         count=count+1;
@@ -241,9 +241,9 @@ function [c,par]=getParameter(par,c,count,fname,flag)
         par.(fname).(var)=splitline;
     elseif strcmp(flag,'update c')
         if length(splitline)~=length(strcat(par.(fname).(var)))
-            c(count)=strjoin(par.(fname).(var));
+            c{count}=strjoin(par.(fname).(var));
         elseif ~all(strcmp(splitline,strcat(par.(fname).(var))))
-            c(count)=strjoin(par.(fname).(var));
+            c{count}=strjoin(par.(fname).(var));
         end
         
     end
